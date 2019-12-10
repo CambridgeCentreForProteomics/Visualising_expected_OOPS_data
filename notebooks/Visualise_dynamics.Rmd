@@ -1,0 +1,98 @@
+---
+title: "Visualising RNA binding dynamics"
+output:
+  pdf_document: default
+  html_notebook: default
+header-includes:
+- \usepackage{xcolor}
+- \usepackage{framed}
+---
+
+
+Here we will visualise total and RNA-bound protein abundances across conditions.
+
+Below we load the required packages and set a plotting theme.
+```{r, message=FALSE, warning=FALSE}
+# load packages
+library(tidyverse)
+library(UniProt.ws)
+
+# set up standardised plotting scheme
+theme_set(theme_bw(base_size = 15) +
+            theme(panel.grid.major=element_blank(),
+                  panel.grid.minor=element_blank(),
+                  aspect.ratio=1))
+
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442",
+               "#0072B2", "#D55E00", "#CC79A7", "#999999")
+```
+
+
+We start by reading in the data. Our input here is the protein-level quantification for the Nocodazole arrest/release experiment conducted for the OOPS NBT paper (https://www.nature.com/articles/s41587-018-0001-2). In this experiment, we wanted to assess changes in RNA binding in arrested/released cells. To do this, we quantified "total" protein abundance and RNA-bound (extracted by OOPS) protein abundance. The peptide-level abundances have been aggregated to protein level abundance and center-median normalised. Proteins with missing values have been removed. Only proteins quantified in both "total" and "OOPS" samples are included.
+
+The input data here is identical to supplementary table 5 from the above paper. 
+```{r}
+protein_quant_raw <- readxl::read_excel('../raw/ncbi_30607034_OOPS_NBT_table_S5.xlsx',
+                                        sheet=3, skip=1, n_max=1917)
+
+```
+
+In order to plot a functional subset of proteins, we will use the UniProt pathway annotations.
+
+Warning: This cell will take a few minutes to run the query on the Uniprot database...
+```{r}
+humanUP <- UniProt.ws(taxId=9606) # H.sapiens
+protein_ids <- protein_quant_raw$master_protein
+
+hsapiens.annot <- AnnotationDbi::select(
+  humanUP,
+  keys = protein_ids, 
+  columns = c("PATHWAY",  "PROTEIN-NAMES"),
+  keystyle = "UNIPROTKB")
+
+hsapiens.pathway <-  hsapiens.annot %>% data.frame() %>% 
+  separate_rows(PATHWAY, sep="; ") %>% dplyr::select(UNIPROTKB, PROTEIN.NAMES, PATHWAY)
+
+```
+
+Identify the glycolysis proteins
+```{r}
+glycolysis_proteins <- hsapiens.pathway %>% filter(PATHWAY=='glycolysis')
+glycolysis_proteins$cleaned_protein_name <- sapply(strsplit(glycolysis_proteins$PROTEIN.NAMES, split='\\('), '[[', 1)
+```
+
+Restructure the data and subset to the glycolysis proteins
+```{r}
+glycolysis_intensities <- protein_quant_raw %>%
+  gather(key='sample', value='intensity', -master_protein) %>%
+  merge(glycolysis_proteins, by.x='master_protein', by.y='UNIPROTKB') %>%
+  separate(sample, into=c('timepoint', 'replicate', 'type'), remove=FALSE) %>%
+  mutate(type=factor(type, levels=c('total', 'OOPS'))) %>%
+  mutate(timepoint=factor(timepoint, levels=c('0h', '6h', '23h')))
+
+glycolysis_intensities$type <- recode(glycolysis_intensities$type,  'OOPS'='RNA-bound', 'total'='Total')
+```
+
+Plot the glycolysis proteins
+```{r, fig.width=10}
+protein_order <- glycolysis_intensities %>%
+  group_by(cleaned_protein_name) %>% summarise(max_intensity=max(intensity)) %>%
+  arrange(max_intensity) %>% pull(cleaned_protein_name)
+
+p <- glycolysis_intensities %>%
+  mutate(cleaned_protein_name=factor(cleaned_protein_name, levels=protein_order)) %>%
+  ggplot(aes(interaction(replicate, timepoint), cleaned_protein_name, fill=intensity)) +
+  geom_tile(colour='grey80', lwd=0.1) +
+  facet_grid(.~type) +
+  ylab('') + xlab('') +
+  scale_x_discrete(labels=c('', '0h', '', '', '6h', '', '', '23h', '')) +
+  geom_vline(xintercept=3.5) +
+  geom_vline(xintercept=6.5) +
+  scale_fill_gradient(low=cbPalette[1], high=cbPalette[5], name='Protein abundance\n(centre-median normalised)') +
+  theme(axis.text.y=element_text(size=10))
+
+print(p)
+
+ggsave('../results/plots/rna_binding_changes_heatmap.png')
+```
+

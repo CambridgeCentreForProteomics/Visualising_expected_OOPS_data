@@ -1,4 +1,15 @@
-# OOPS_change_in_RNA_binding
-Example of how to detect change in RNA binding from parallel Total and RNA-bound protein abundance TMT quantification using the OOPS protocol.
+# Visualising OOPS
 
-This notebook is for the Nature Protocols supplementary material
+This repository was used to generate figures for the OOPS Nature Protocols manuscript
+
+The repository structure is:
+
+- raw:
+Copies of supplementary data from the original OOPS publication (https://www.nature.com/articles/s41587-018-0001-2)
+
+- notebooks:
+R markdown notebooks to analyse data and generate figures
+
+- results/plots:
+Plots from notebooks
+

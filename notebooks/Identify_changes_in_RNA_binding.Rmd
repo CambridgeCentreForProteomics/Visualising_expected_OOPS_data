@@ -9,8 +9,6 @@ header-includes:
 ---
 
 
-\colorlet{shadecolor}{lightgray!10} 
-
 In this notebook, we will identify changes in RNA binding following parallel quantification of the "total" and "RNA-bound" protein abundance using the OOPS protocol. We start with a single protein and use the base function `lm`, then apply this to the complete dataset to identify all proteins with a change in RNA binding. Following this, we use the `limma` package to test for RNA binding changes using a moderated t-statistic.
 
 Below we load the required packages and set a plotting theme.
@@ -36,7 +34,7 @@ We start by reading in the data. Our input here is the protein-level quantificat
 
 The input data here is identical to supplementary table 5 from the above paper. 
 ```{r}
-protein_quant_raw <- readxl::read_excel('./ncbi_30607034_OOPS_NBT_table_S5.xlsx',
+protein_quant_raw <- readxl::read_excel('../raw/ncbi_30607034_OOPS_NBT_table_S5.xlsx',
                                         sheet=3, skip=1, n_max=1917) %>%
   tibble::column_to_rownames('master_protein')
 
@@ -252,31 +250,31 @@ limma_results_treat_sig <- topTreat(limma_results_treat, coef = "timepoint6h:typ
 
 ```
 
-And below we reproduce our volcano plot including the 95% confidence interval and highlight those proteins which have < 1% FDR and an absolute fold change significantly greater than 2. 
+And below we reproduce our volcano plot including the 95% confidence interval and highlight those proteins which have < 1% FDR and an absolute fold change significantly greater than 2. We can see that many of the proteins with a fold change (FC) point estimate > 2 have a 95% confidence interval that overlaps the dashed lines for >2-fold change. TREAT also takes the multiple testing into account so it's even more conservative than just using the 95% CI shown below.
 
 ```{r, fig.height=6, fid.width=6, out.width = '60%'}
 
-limma_results$sig <- ifelse(limma_results$P.Value<=0.01, "<1% FDR", ">1% FDR") # add "sig" column
+limma_results$sig <- ifelse(limma_results$P.Value<=0.01, "Sig. change (FC > 1; <1% FDR)", ">1% FDR") # add "sig" column
 limma_results$sig[
-  rownames(limma_results) %in% rownames(limma_results_treat_sig)] <- "<1% FDR & FC > 2 (TREAT)"
+  rownames(limma_results) %in% rownames(limma_results_treat_sig)] <- "Sig. change (FC > 2; <1% FDR)"
 
 limma_results$SE <- sqrt(limma_fit_results$s2.post) * limma_fit_results$stdev.unscaled[,1]
 
 p <- limma_results %>%
   ggplot(aes(logFC, -log10(P.Value), colour=sig)) +
-  geom_point(size=1) +
-  scale_colour_manual(values=c(cbPalette[c(6,2)], "grey20"), name="") + # manually adjust colours
+  geom_point(size=0.5) +
+  geom_errorbarh(aes(xmin=CI.L, xmax=CI.R), alpha=0.3, size=0.5) +
+  scale_colour_manual(values=c("grey20", cbPalette[c(2,6)]), name="") + # manually adjust colours
   geom_vline(xintercept=1, linetype=2, colour="grey70") +
   geom_vline(xintercept=-1, linetype=2, colour="grey70") +
-  theme(legend.position="top", legend.direction=2)
+  theme(legend.position="top", legend.direction=2) +
+  xlab('Fold change (log2)') +
+  ylab('-log10(P-value)')
   
 print(p)
+ggsave('../results/plots/rna_binding_changes_volcano.png')
 ```
 
-We can also add error bars to the above Below, we can see that many of the proteins with a fold change (FC) point estimate > 2 have a 95% confidence interval that overlaps the dashed lines for >2-fold change. TREAT also takes the multiple testing into account so it's even more conservative than just using the 95% CI shown below.
-```{r, fig.height=6, fid.width=6, out.width = '60%'}
-print(p + geom_errorbarh(aes(xmin=CI.L, xmax=CI.R)))
-```
 
 Of course, the threshold for the fold changes you are interested in depends entirely on your prior expectations. A 2-fold threshold for "biologically" relevant changes will likely be overly conservative in the great majority of cases.
 
