@@ -89,10 +89,11 @@ p <- glycolysis_intensities %>%
   geom_vline(xintercept=3.5) +
   geom_vline(xintercept=6.5) +
   scale_fill_gradient(low=cbPalette[1], high=cbPalette[5], name='Protein abundance\n(centre-median normalised)') +
-  theme(axis.text.y=element_text(size=10))
+  theme(axis.text.y=element_text(size=10), legend.title=element_text(size=10), legend.text=element_text(size=10))
 
 print(p)
 
-ggsave('../results/plots/rna_binding_changes_heatmap.png')
+ggsave('../results/plots/rna_binding_changes_heatmap.png', width=10, height=5)
+ggsave('../results/plots/rna_binding_changes_heatmap.pdf', width=10, height=5)
 ```
 

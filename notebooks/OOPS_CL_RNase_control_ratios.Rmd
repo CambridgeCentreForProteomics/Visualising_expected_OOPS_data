@@ -78,6 +78,7 @@ ratios_p1 <- combined_cl_rnase %>%
 
 print(ratios_p1)
 ggsave('../results/plots/ratios_p1.png')
+ggsave('../results/plots/ratios_p1.pdf')
 
 ratios_p2 <- combined_cl_rnase %>% 
   mutate(exp=factor(exp, levels=c('RNase:Ctrl', 'CL:NC'))) %>%
@@ -91,6 +92,7 @@ ratios_p2 <- combined_cl_rnase %>%
 
 print(ratios_p2)
 ggsave('../results/plots/ratios_p2.png')
+ggsave('../results/plots/ratios_p2.pdf')
 
 ```
 

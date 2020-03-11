@@ -273,6 +273,7 @@ p <- limma_results %>%
   
 print(p)
 ggsave('../results/plots/rna_binding_changes_volcano.png')
+ggsave('../results/plots/rna_binding_changes_volcano.pdf')
 ```
 
 
