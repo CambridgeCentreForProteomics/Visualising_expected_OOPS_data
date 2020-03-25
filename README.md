@@ -1,5 +1,3 @@
-# Visualising OOPS
-
 This repository was used to generate figures for the OOPS Nature Protocols manuscript
 
 Additionally, a tutorial for identifying changes in RNA binding using OOPS is provided:

@@ -42,7 +42,7 @@ cl_nc_protein_quant_raw <- readxl::read_excel('../raw/ncbi_30607034_OOPS_NBT_tab
   filter(is.finite(CL)) %>%
   mutate(pseudo_CL_NC_Ratio=ifelse(is.na(CL_NC_Ratio), CL, CL_NC_Ratio)) %>%
   select(master_protein, ratio=pseudo_CL_NC_Ratio) %>%
-  mutate(exp='CL:NC')
+  mutate(exp='UV Crosslink +/-')
 
 
 RNase_ctrl_protein_quant_raw <- readxl::read_excel('../raw/ncbi_30607034_OOPS_NBT_table_S1.xlsx',
@@ -53,7 +53,7 @@ RNase_ctrl_protein_quant_raw <- readxl::read_excel('../raw/ncbi_30607034_OOPS_NB
   filter(is.finite(RNAse)) %>%
   mutate(pseudo_RNAse_NC_Ratio=ifelse(is.na(RNAse_NC_Ratio), RNAse, RNAse_NC_Ratio)) %>%
   select(master_protein, ratio=pseudo_RNAse_NC_Ratio) %>%
-  mutate(exp='RNase:Ctrl')
+  mutate(exp='RNase +/-')
 
 ```
 
@@ -66,7 +66,7 @@ Plot
 ```{r}
 
 ratios_p1 <- combined_cl_rnase %>% 
-  mutate(exp=factor(exp, levels=c('CL:NC', 'RNase:Ctrl'))) %>%
+  mutate(exp=factor(exp, levels=c('UV Crosslink +/-', 'RNase +/-'))) %>%
   ggplot(aes(ratio, fill=exp)) +
   geom_histogram(bins=60) +
   facet_grid(exp~., scales='free_y') +
@@ -81,7 +81,7 @@ ggsave('../results/plots/ratios_p1.png')
 ggsave('../results/plots/ratios_p1.pdf')
 
 ratios_p2 <- combined_cl_rnase %>% 
-  mutate(exp=factor(exp, levels=c('RNase:Ctrl', 'CL:NC'))) %>%
+  mutate(exp=factor(exp, levels=c('RNase +/-', 'UV Crosslink +/-'))) %>%
   ggplot(aes(exp, ratio, colour=exp)) +
   geom_quasirandom(size=0.5, bandwidth=0.25) +
   coord_flip() +
